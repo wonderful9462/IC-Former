@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument('--max_seq_len', type=int, default=512)
     parser.add_argument('--use_chunk', action='store_true')
     parser.add_argument('--max_chunk_len', type=int, default=512)
-    parser.add_argument('--encode', action='store_true')
+    # parser.add_argument('--encode', action='store_true')
     # training args
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--shuffle', action='store_true')
@@ -50,7 +50,7 @@ def parse_args():
     parser.add_argument('--max_norm', type=float, default=2.0)
     parser.add_argument('--avg_level', type=str, default="token", choices=["token", "sentence"])
     # generation args
-    parser.add_argument('--max_new_tokens', type=int, default=1280)
+    parser.add_argument('--max_new_tokens', type=int, default=256)
     parser.add_argument('--output_file', type=str, default="output.jsonl")
 
     args = parser.parse_args()

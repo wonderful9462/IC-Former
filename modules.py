@@ -49,6 +49,7 @@ class Trainer:
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.gradient_accumulation = gradient_accumulation
+        self.max_norm = max_norm
         self.shuffle = shuffle
         self.clip_grad = clip_grad
 
