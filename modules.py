@@ -8,9 +8,7 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from peft import PeftModel
-
+# from peft import PeftModel
 from utils import current_date_time
 from icformer import ICFormerModel
 
@@ -439,152 +437,154 @@ class ICFormerQA(ICFormer):
         # The bos token has been added in the context.
         tokenizer.add_bos_token = False
 
-class ICAE(BaseModel):
-    def __init__(self, language_model:PreTrainedModel, tokenizer:PreTrainedTokenizer):
-        super().__init__(language_model=language_model, tokenizer=tokenizer)
+# Reproduction of the ICAE model.
 
-        self.memory_embeddings = nn.Parameter(torch.zeros([1, 128, 4096], device=language_model.device, dtype=language_model.dtype))
-        self.AE = nn.Parameter(torch.zeros([1, 1, 4096], device=language_model.device, dtype=language_model.dtype))
-        self.LM = nn.Parameter(torch.zeros([1, 1, 4096], device=language_model.device, dtype=language_model.dtype))
+# class ICAE(BaseModel):
+#     def __init__(self, language_model:PreTrainedModel, tokenizer:PreTrainedTokenizer):
+#         super().__init__(language_model=language_model, tokenizer=tokenizer)
+
+#         self.memory_embeddings = nn.Parameter(torch.zeros([1, 128, 4096], device=language_model.device, dtype=language_model.dtype))
+#         self.AE = nn.Parameter(torch.zeros([1, 1, 4096], device=language_model.device, dtype=language_model.dtype))
+#         self.LM = nn.Parameter(torch.zeros([1, 1, 4096], device=language_model.device, dtype=language_model.dtype))
         
-        self.max_seq_len = 512
-        self.max_chunk_size = 512
-        self.lm_ratio = 0.4
-        self.reserve_len = 8
-        self.min_tokens_for_lm = 64
-        self.use_chunk = False
+#         self.max_seq_len = 512
+#         self.max_chunk_size = 512
+#         self.lm_ratio = 0.4
+#         self.reserve_len = 8
+#         self.min_tokens_for_lm = 64
+#         self.use_chunk = False
     
-    def get_soft_prompt(
-        self, 
-        inputs_embeds=None, 
-        attention_mask=None, 
-        use_chunk=False, 
-        **kwargs
-    ):
-        if attention_mask is not None:
-            attention_mask = attention_mask.to(device=self.language_model.device)
-        embeddings = inputs_embeds.to(device=self.language_model.device)
-        if use_chunk:
-            soft_prompt = []
-            chunk_num = math.ceil(embeddings.shape[1] / self.max_chunk_size)
-            chunk_size = math.ceil(embeddings.shape[1] / chunk_num)
+#     def get_soft_prompt(
+#         self, 
+#         inputs_embeds=None, 
+#         attention_mask=None, 
+#         use_chunk=False, 
+#         **kwargs
+#     ):
+#         if attention_mask is not None:
+#             attention_mask = attention_mask.to(device=self.language_model.device)
+#         embeddings = inputs_embeds.to(device=self.language_model.device)
+#         if use_chunk:
+#             soft_prompt = []
+#             chunk_num = math.ceil(embeddings.shape[1] / self.max_chunk_size)
+#             chunk_size = math.ceil(embeddings.shape[1] / chunk_num)
 
-            for index in range(chunk_num):
-                chunk_embeds = embeddings[:,index*chunk_size:(index+1)*chunk_size]
-                hidden_states = torch.cat([chunk_embeds, self.memory_embeddings], dim=1).to(device=self.language_model.device)
-                chunk_soft_prompt = self.get_backbone()(
-                    inputs_embeds=hidden_states,
-                    attention_mask=attention_mask,
-                    **kwargs,
-                )[0][:,-self.memory_embeddings.shape[1]:]
-                soft_prompt.append(chunk_soft_prompt)
-            soft_prompt = torch.cat(soft_prompt, dim=1)
-        else:
-            embeddings = torch.cat([embeddings, self.memory_embeddings], dim=1)
-            soft_prompt = self.get_backbone()(
-                inputs_embeds=embeddings,
-                attention_mask=attention_mask,
-                **kwargs,
-            )[0][:, -self.memory_embeddings.shape[1]:]
-        return soft_prompt.to(device=self.language_model.device)
+#             for index in range(chunk_num):
+#                 chunk_embeds = embeddings[:,index*chunk_size:(index+1)*chunk_size]
+#                 hidden_states = torch.cat([chunk_embeds, self.memory_embeddings], dim=1).to(device=self.language_model.device)
+#                 chunk_soft_prompt = self.get_backbone()(
+#                     inputs_embeds=hidden_states,
+#                     attention_mask=attention_mask,
+#                     **kwargs,
+#                 )[0][:,-self.memory_embeddings.shape[1]:]
+#                 soft_prompt.append(chunk_soft_prompt)
+#             soft_prompt = torch.cat(soft_prompt, dim=1)
+#         else:
+#             embeddings = torch.cat([embeddings, self.memory_embeddings], dim=1)
+#             soft_prompt = self.get_backbone()(
+#                 inputs_embeds=embeddings,
+#                 attention_mask=attention_mask,
+#                 **kwargs,
+#             )[0][:, -self.memory_embeddings.shape[1]:]
+#         return soft_prompt.to(device=self.language_model.device)
     
-    @torch.no_grad()
-    def generate(
-        self,
-        inputs_embeds:torch.Tensor,
-        max_new_tokens:int=256,
-        skip_special_tokens:bool=True,
-        streaming:bool=True,
-        return_output:bool=True,
-        **kwargs,
-    ):
-        with self.language_model.disable_adapter():
-            return super().generate(
-                inputs_embeds=inputs_embeds, 
-                max_new_tokens=max_new_tokens, 
-                skip_special_tokens=skip_special_tokens, 
-                streaming=streaming, 
-                return_output=return_output, 
-                **kwargs
-            )
+#     @torch.no_grad()
+#     def generate(
+#         self,
+#         inputs_embeds:torch.Tensor,
+#         max_new_tokens:int=256,
+#         skip_special_tokens:bool=True,
+#         streaming:bool=True,
+#         return_output:bool=True,
+#         **kwargs,
+#     ):
+#         with self.language_model.disable_adapter():
+#             return super().generate(
+#                 inputs_embeds=inputs_embeds, 
+#                 max_new_tokens=max_new_tokens, 
+#                 skip_special_tokens=skip_special_tokens, 
+#                 streaming=streaming, 
+#                 return_output=return_output, 
+#                 **kwargs
+#             )
     
-    def train_step(self, step, data):
-        lm = random.random() < self.lm_ratio
-        context = data
-        context_ids = self.tokenizer(context)['input_ids']
-        if lm: # lm loss
-            if len(context_ids) > self.max_seq_len: # random split
-                last_start = len(context_ids) - self.max_seq_len
-                start = random.randint(0, last_start)
-                left_ids, right_ids = context_ids[start:start+self.max_seq_len], context_ids[start+self.max_seq_len:]
-            else:
-                pivot = random.randint(0, len(context_ids)-1)
-                left_ids, right_ids = context_ids[:pivot+1], context_ids[pivot+1:]
-            if len(right_ids) >= self.min_tokens_for_lm:
-                right_ids = right_ids[:self.max_seq_len]
-                left, right = self.convert_ids_to_embeds(left_ids), self.convert_ids_to_embeds(right_ids)
-                label_ids = torch.tensor(right_ids[self.reserve_len:], device=self.language_model.device)
-                soft_prompt = self.get_soft_prompt(inputs_embeds=left, use_chunk=self.use_chunk)
-                inputs_embeds = torch.cat([soft_prompt, self.LM, right], dim=1)
-                with self.language_model.disable_adapter():
-                    logits = self.language_model(inputs_embeds=inputs_embeds).logits[0][-len(label_ids)-1:-1]
-                lm_loss = F.cross_entropy(logits, label_ids, reduction="none")
-                return lm_loss
-            else:
-                lm = False
-        if not lm: # ae loss
-            if len(context_ids) > self.max_seq_len: # random split
-                last_start = len(context_ids) - self.max_seq_len
-                start = random.randint(0, last_start)
-                context_ids = context_ids[start:start+self.max_seq_len]
-            label_ids = context_ids + [self.tokenizer.eos_token_id]
-            context_embeds = self.convert_ids_to_embeds(context_ids)
-            label_embeds = self.convert_ids_to_embeds(label_ids)
-            soft_prompt = self.get_soft_prompt(inputs_embeds=context_embeds, use_chunk=self.use_chunk)
-            inputs_embeds = torch.cat([soft_prompt, self.AE, label_embeds], dim=1)
-            with self.language_model.disable_adapter():
-                logits = self.language_model(inputs_embeds=inputs_embeds).logits[0][-len(label_ids)-1:-1]
-            ae_loss = F.cross_entropy(logits, torch.tensor(label_ids, device=logits.device), reduction="none")
-            return ae_loss
+#     def train_step(self, step, data):
+#         lm = random.random() < self.lm_ratio
+#         context = data
+#         context_ids = self.tokenizer(context)['input_ids']
+#         if lm: # lm loss
+#             if len(context_ids) > self.max_seq_len: # random split
+#                 last_start = len(context_ids) - self.max_seq_len
+#                 start = random.randint(0, last_start)
+#                 left_ids, right_ids = context_ids[start:start+self.max_seq_len], context_ids[start+self.max_seq_len:]
+#             else:
+#                 pivot = random.randint(0, len(context_ids)-1)
+#                 left_ids, right_ids = context_ids[:pivot+1], context_ids[pivot+1:]
+#             if len(right_ids) >= self.min_tokens_for_lm:
+#                 right_ids = right_ids[:self.max_seq_len]
+#                 left, right = self.convert_ids_to_embeds(left_ids), self.convert_ids_to_embeds(right_ids)
+#                 label_ids = torch.tensor(right_ids[self.reserve_len:], device=self.language_model.device)
+#                 soft_prompt = self.get_soft_prompt(inputs_embeds=left, use_chunk=self.use_chunk)
+#                 inputs_embeds = torch.cat([soft_prompt, self.LM, right], dim=1)
+#                 with self.language_model.disable_adapter():
+#                     logits = self.language_model(inputs_embeds=inputs_embeds).logits[0][-len(label_ids)-1:-1]
+#                 lm_loss = F.cross_entropy(logits, label_ids, reduction="none")
+#                 return lm_loss
+#             else:
+#                 lm = False
+#         if not lm: # ae loss
+#             if len(context_ids) > self.max_seq_len: # random split
+#                 last_start = len(context_ids) - self.max_seq_len
+#                 start = random.randint(0, last_start)
+#                 context_ids = context_ids[start:start+self.max_seq_len]
+#             label_ids = context_ids + [self.tokenizer.eos_token_id]
+#             context_embeds = self.convert_ids_to_embeds(context_ids)
+#             label_embeds = self.convert_ids_to_embeds(label_ids)
+#             soft_prompt = self.get_soft_prompt(inputs_embeds=context_embeds, use_chunk=self.use_chunk)
+#             inputs_embeds = torch.cat([soft_prompt, self.AE, label_embeds], dim=1)
+#             with self.language_model.disable_adapter():
+#                 logits = self.language_model(inputs_embeds=inputs_embeds).logits[0][-len(label_ids)-1:-1]
+#             ae_loss = F.cross_entropy(logits, torch.tensor(label_ids, device=logits.device), reduction="none")
+#             return ae_loss
     
-    def get_pretrained_model(self):
-        return self.language_model
+#     def get_pretrained_model(self):
+#         return self.language_model
 
 
-class ICAEQA(ICAE):
-    def __init__(self, language_model:PreTrainedModel, tokenizer:PreTrainedTokenizer):
-        super().__init__(language_model=language_model, tokenizer=tokenizer)
-        self.AE.requires_grad = False
-        self.LM.requires_grad = False
-        self.FT = nn.Parameter(torch.zeros([1, 1, 4096], device=language_model.device, dtype=language_model.dtype))
+# class ICAEQA(ICAE):
+#     def __init__(self, language_model:PreTrainedModel, tokenizer:PreTrainedTokenizer):
+#         super().__init__(language_model=language_model, tokenizer=tokenizer)
+#         self.AE.requires_grad = False
+#         self.LM.requires_grad = False
+#         self.FT = nn.Parameter(torch.zeros([1, 1, 4096], device=language_model.device, dtype=language_model.dtype))
 
-        self.pre_embeds = self.convert_ids_to_embeds(self.tokenizer("<s>[INST] Response the Prompt based on the below text:\n\n")['input_ids'])
-        self.post_embeds = self.convert_ids_to_embeds(self.tokenizer("[/INST]")['input_ids'])
+#         self.pre_embeds = self.convert_ids_to_embeds(self.tokenizer("<s>[INST] Response the Prompt based on the below text:\n\n")['input_ids'])
+#         self.post_embeds = self.convert_ids_to_embeds(self.tokenizer("[/INST]")['input_ids'])
 
-        self.max_label_len = 65535
+#         self.max_label_len = 65535
 
-    def train_step(self, step, data):
-        context, prompt, label = data
+#     def train_step(self, step, data):
+#         context, prompt, label = data
 
-        label_ids = self.tokenizer(label)['input_ids'][:self.max_label_len] + [self.tokenizer.eos_token_id]
-        context_ids = self.tokenizer(context)['input_ids']
-        prompt_ids = self.tokenizer(prompt)['input_ids']
-        label_len = len(label_ids)
+#         label_ids = self.tokenizer(label)['input_ids'][:self.max_label_len] + [self.tokenizer.eos_token_id]
+#         context_ids = self.tokenizer(context)['input_ids']
+#         prompt_ids = self.tokenizer(prompt)['input_ids']
+#         label_len = len(label_ids)
 
-        label_embeds = self.convert_ids_to_embeds(label_ids)
-        context_embeds = self.convert_ids_to_embeds(context_ids)
-        prompt_embeds = self.convert_ids_to_embeds(prompt_ids)
+#         label_embeds = self.convert_ids_to_embeds(label_ids)
+#         context_embeds = self.convert_ids_to_embeds(context_ids)
+#         prompt_embeds = self.convert_ids_to_embeds(prompt_ids)
         
-        soft_prompt = self.get_soft_prompt(inputs_embeds=context_embeds, use_chunk=self.use_chunk)
-        inputs_embeds = torch.cat([self.pre_embeds, soft_prompt, self.FT, prompt_embeds, self.post_embeds, label_embeds], dim=1)
+#         soft_prompt = self.get_soft_prompt(inputs_embeds=context_embeds, use_chunk=self.use_chunk)
+#         inputs_embeds = torch.cat([self.pre_embeds, soft_prompt, self.FT, prompt_embeds, self.post_embeds, label_embeds], dim=1)
 
-        with self.language_model.disable_adapter():
-            logits = self.language_model(inputs_embeds=inputs_embeds).logits[0][-label_len-1:-1]
+#         with self.language_model.disable_adapter():
+#             logits = self.language_model(inputs_embeds=inputs_embeds).logits[0][-label_len-1:-1]
 
-        loss = F.cross_entropy(logits, torch.tensor(label_ids, device=logits.device), reduction="none")
-        return loss
+#         loss = F.cross_entropy(logits, torch.tensor(label_ids, device=logits.device), reduction="none")
+#         return loss
     
-    @staticmethod
-    def prepare_tokenizer(tokenizer:PreTrainedTokenizer):
-        tokenizer.pad_token_id = 0
-        tokenizer.add_bos_token = False
+#     @staticmethod
+#     def prepare_tokenizer(tokenizer:PreTrainedTokenizer):
+#         tokenizer.pad_token_id = 0
+#         tokenizer.add_bos_token = False
