@@ -24,7 +24,7 @@ class Trainer:
         scheduler=None,
         max_epoch=1,
         save_interval=1000,
-        save_dir='./logs',
+        save_dir='./output',
         save_optimizer=False,
         save_scheduler=False,
         avg_level='token',
