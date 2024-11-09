@@ -343,7 +343,7 @@ class ICFormer(BaseModel):
             )
 
         if input_ids is not None:
-            embeddings = self.convert_ids_to_embeds(input_ids)
+            inputs_embeds = self.convert_ids_to_embeds(input_ids)
         embeddings = inputs_embeds.to(device=self.icformer.device)
 
         # Causal attention mask for query tokens.

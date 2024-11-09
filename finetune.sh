@@ -8,5 +8,7 @@ CUDA_VISIBLE_DEVICES=0 python finetune.py \
 --save_interval 5000 \
 --gradient_accumulation 128 \
 --avg_level sentence \
---shuffle \
+--clip_grad \
+--max_norm 1 \
 --use_chunk \
+--shuffle \

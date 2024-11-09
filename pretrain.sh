@@ -5,4 +5,5 @@ CUDA_VISIBLE_DEVICES=0 python pretrain.py \
 --gradient_accumulation 32 \
 --max_seq_len 512 \
 --save_optimizer \
+--clip_grad \
 --shuffle
