@@ -11,6 +11,10 @@ conda create -n icformer python=3.9
 pip install -r requirements.txt
 ```
 
+## Checkpoint
+
+You can download IC-Former checkpoint on Hugging Face: https://huggingface.co/wonderful9462/IC-Former.
+
 ## Dataset
 
 - For pretraining, we use a part of [Pile](https://github.com/EleutherAI/the-pile) Dataset, and you can download it [here](https://huggingface.co/datasets/EleutherAI/the_pile_deduplicated).
