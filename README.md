@@ -1,5 +1,5 @@
 # In-Context Former: Lightning-fast Compressing Context for Large Language Model
-This repository is the official implementation of the paper "In-Context Former: Lightning-fast Compressing Context for Large Language Model" (Findings of EMNLP 2024).
+This repository is the official implementation of the paper "[In-Context Former: Lightning-fast Compressing Context for Large Language Model](https://arxiv.org/abs/2406.13618)" (Findings of EMNLP 2024).
 
 ## Requirements
 
@@ -65,11 +65,24 @@ bash generate.sh
 If you find this code useful, please kindly cite our work as:
 
 ```bibtex
-@article{wang2024context,
-  title={In-Context Former: Lightning-fast Compressing Context for Large Language Model},
-  author={Wang, Xiangfeng and Chen, Zaiyi and Xie, Zheyong and Xu, Tong and He, Yongyi and Chen, Enhong},
-  journal={arXiv preprint arXiv:2406.13618},
-  year={2024}
+@inproceedings{wang-etal-2024-context-former,
+    title = "In-Context Former: Lightning-fast Compressing Context for Large Language Model",
+    author = "Wang, Xiangfeng  and
+      Chen, Zaiyi  and
+      Xu, Tong  and
+      Xie, Zheyong  and
+      He, Yongyi  and
+      Chen, Enhong",
+    editor = "Al-Onaizan, Yaser  and
+      Bansal, Mohit  and
+      Chen, Yun-Nung",
+    booktitle = "Findings of the Association for Computational Linguistics: EMNLP 2024",
+    month = nov,
+    year = "2024",
+    address = "Miami, Florida, USA",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.findings-emnlp.138",
+    pages = "2445--2460",
 }
 ```
 
